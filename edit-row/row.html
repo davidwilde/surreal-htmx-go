@@ -10,7 +10,7 @@
     >
       Edit
       <script>
-        me().onclick = async (event) => {
+        me().onclick = async (ev) => {
           if (any(".editing")) {
             const result = await Swal.fire({
               title: "Already editing",
@@ -23,7 +23,7 @@
             }
             any(".editing").trigger("cancel");
           }
-          me(event).trigger("edit");
+          me(ev).trigger("edit");
         };
       </script>
     </button>
