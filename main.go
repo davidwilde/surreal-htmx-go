@@ -1,15 +1,18 @@
 package main
 
 import (
+	"context"
 	"database/sql"
+	"encoding/gob"
 	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
 
+	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/gorilla/sessions"
 	_ "github.com/lib/pq"
+	"golang.org/x/oauth2"
 )
 
 type Person struct {
@@ -18,8 +21,13 @@ type Person struct {
 	Email string
 }
 
-var db *sql.DB
-var logLevel = os.Getenv("LOG_LEVEL")
+var (
+	db           *sql.DB
+	logLevel     string
+	oauthConfig  *oauth2.Config
+	sessionStore *sessions.CookieStore
+	provider     *oidc.Provider
+)
 
 func init() {
 
@@ -44,6 +52,7 @@ func init() {
 	opts := &slog.HandlerOptions{
 		Level: slog.Level(logLevel),
 	}
+
 	textHandler := slog.NewTextHandler(os.Stdout, opts)
 	logger := slog.New(textHandler)
 	slog.SetDefault(logger)
@@ -55,71 +64,47 @@ func init() {
 		panic(err)
 	}
 	db = conn
+
+	provider, err = oidc.NewProvider(context.Background(), os.Getenv("OIDC_PROVIDER_URL"))
+	if err != nil {
+		panic(err)
+	}
+
+	oauthConfig = &oauth2.Config{
+		ClientID:     os.Getenv("CLIENT_ID"),
+		ClientSecret: os.Getenv("CLIENT_SECRET"),
+		Endpoint:     provider.Endpoint(),
+		RedirectURL:  os.Getenv("REDIRECT_URL"),
+		Scopes:       []string{"openid", "profile", "email"},
+	}
+
+	sessionStore = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+	gob.Register(UserProfile{})
+}
+
+func IndexHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := sessionStore.Get(r, "session")
+	profile := session.Values["profile"]
+	slog.Info("Handling index request")
+	t := template.Must(template.ParseFiles("index.html"))
+	t.Execute(w, profile)
+
 }
 
 func main() {
 	handler := slog.NewJSONHandler(os.Stdout, nil)
 	webErrorLogger := slog.NewLogLogger(handler, slog.LevelError)
-	slog.Info("Starting server on port 80")
-	http.HandleFunc("/", Handler)
+	slog.Info("Starting server on port 3000")
+
+	http.HandleFunc("/", IndexHandler)
+	http.Handle("/contact", AuthMiddleware(http.HandlerFunc(Handler)))
+	http.HandleFunc("/login", LoginHandler)
+	http.HandleFunc("/callback", CallbackHandler)
 	server := http.Server{
 		ErrorLog: webErrorLogger,
+		Addr:     ":3000",
 	}
 	server.ListenAndServe()
-}
-
-func Handler(w http.ResponseWriter, r *http.Request) {
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) >= 3 && parts[1] == "contact" {
-		slog.Info("Handling contact request")
-		contactID, err := strconv.Atoi(parts[2])
-		if err != nil {
-			http.Error(w, "Invalid contact ID", http.StatusBadRequest)
-			return
-		}
-
-		// Query the database to retrieve the person by ID.
-		person, err := getPersonByID(contactID)
-		if err != nil {
-			http.Error(w, "Failed to retrieve contact", http.StatusInternalServerError)
-			return
-		}
-
-		if len(parts) == 4 {
-			slog.Info("Handling contact request with action")
-			action := parts[3]
-			if action == "edit" {
-				slog.Info("Handling contact request with action edit")
-				t := template.Must(template.ParseFiles("edit.html"))
-				t.ExecuteTemplate(w, "person", person)
-				return
-			}
-		}
-
-		if r.Method == "PUT" {
-			slog.Info("Handling contact request with PUT")
-			err := updatePerson(person, r.FormValue("name"), r.FormValue("email"))
-			if err != nil {
-				http.Error(w, "Failed to update contact", http.StatusInternalServerError)
-				return
-			}
-		}
-
-		t := template.Must(template.ParseFiles("row.html"))
-		t.ExecuteTemplate(w, "person", person)
-		return
-	}
-
-	// Handle the index page with a list of people.
-	slog.Info("Handle the index page with a list of people")
-	people, err := getAllPeople()
-	if err != nil {
-		http.Error(w, "Failed to retrieve people", http.StatusInternalServerError)
-		return
-	}
-
-	t := template.Must(template.ParseFiles("index.html", "row.html"))
-	t.Execute(w, people)
 }
 
 func getPersonByID(id int) (Person, error) {

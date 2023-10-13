@@ -1,27 +1,21 @@
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <title>HTMX Example</title>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
-    <script src="https://unpkg.com/htmx.org@1.9.5"></script>
-    <script src="https://cdn.jsdelivr.net/gh/gnat/surreal/surreal.js"></script>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9"
-      crossorigin="anonymous"
-    />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Login</title>
   </head>
-  <table class="table delete-row-example">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody hx-target="closest tr" hx-swap="outerHTML">
-      {{ range . }} {{ template "person" .}} {{ end }}
-    </tbody>
-  </table>
+  <body>
+    <h1>Login with Your Email Address</h1>
+    <p>Enter your email address to log in:</p>
+    {{ if .Name }}
+    <form method="post" action="/logout">
+      <button type="submit">Logout</a>
+    </form>
+    {{ else }}
+    <form method="post" action="/login">
+      <button type="submit">  Login</button>
+    </form>
+    {{ end }}
+  </body>
 </html>
