@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log/slog"
 	"net/http"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -23,7 +22,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 
 		_, err := verifier.Verify(r.Context(), tokenString)
 		if err != nil {
-			slog.Error("error verifying token", "error", err, "token", tokenString)
+			logger.Error("error verifying token", "error", err, "token", tokenString)
 			http.Error(w, "Invalid access token", http.StatusUnauthorized)
 			return
 		}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log/slog"
 	"net/http"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -15,7 +14,7 @@ type UserProfile struct {
 }
 
 func CallbackHandler(w http.ResponseWriter, r *http.Request) {
-	slog.Info("Handling callback request")
+	logger.Info("Handling callback request")
 	code := r.URL.Query().Get("code")
 	token, err := oauthConfig.Exchange(r.Context(), code)
 	if err != nil {
@@ -52,7 +51,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	session.Values["access_token"] = token.AccessToken
 
 	if err := session.Save(r, w); err != nil {
-		slog.Debug("Failed to save session", "error", err)
+		logger.Debug("Failed to save session", "error", err)
 		http.Error(w, "Failed to save session", http.StatusInternalServerError)
 		return
 	}
