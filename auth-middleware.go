@@ -2,14 +2,48 @@ package main
 
 import (
 	"net/http"
+	"time"
 
-	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/MicahParks/keyfunc/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
+
+func VerifyAccessTokenWithJWK(accessToken string, jwksURL string) (*jwt.Token, error) {
+	// Create the keyfunc options. Use an error handler that logs. Timeout the initial JWKS refresh request after 10
+	// seconds. This timeout is also used to create the initial context.Context for keyfunc.Get.
+	options := keyfunc.Options{
+		RefreshTimeout: time.Second * 10,
+		RefreshErrorHandler: func(err error) {
+			logger.Error("There was an error with the jwt.Keyfunc", "error", err.Error())
+			return
+		},
+	}
+
+	// Create the JWKS from the resource at the given URL.
+	jwks, err := keyfunc.Get(jwksURL, options)
+	if err != nil {
+		logger.Debug("Failed to create JWKS from resource at the given URL.", "Error", err.Error())
+		return nil, err
+	}
+
+	// Parse the JWT.
+	token, err := jwt.Parse(accessToken, jwks.Keyfunc)
+	if err != nil {
+		logger.Debug("Failed to parse the JWT", "Error", err.Error())
+		return nil, err
+	}
+
+	// Check if the token is valid.
+	if !token.Valid {
+		logger.Debug("The token is invalid", "error", err.Error())
+		return nil, err
+	}
+	logger.Debug("The token is valid.")
+	return token, nil
+}
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Replace 'YOUR_OIDC_PROVIDER_URL' with the URL of your OIDC provider.
-		verifier := provider.Verifier(&oidc.Config{ClientID: oauthConfig.ClientID})
 
 		// Retrieve the access token from the session
 		session, _ := sessionStore.Get(r, "session")
@@ -20,9 +54,9 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		_, err := verifier.Verify(r.Context(), tokenString)
+		_, err := VerifyAccessTokenWithJWK(tokenString, "https://hobby.kinde.com/.well-known/jwks")
 		if err != nil {
-			logger.Error("error verifying token", "error", err, "token", tokenString)
+			logger.Warn("error verifying token", "error", err, "token", tokenString)
 			http.Error(w, "Invalid access token", http.StatusUnauthorized)
 			return
 		}
