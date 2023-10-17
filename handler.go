@@ -8,12 +8,6 @@ import (
 )
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	session, _ := sessionStore.Get(r, "session")
-	profile := session.Values["profile"]
-	accessToken := session.Values["access_token"]
-	logger.Debug("Access Token", "accessToken", accessToken)
-	logger.Debug("Profile", "profile", profile)
-
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) >= 3 {
 		logger.Info("Handling contact request")

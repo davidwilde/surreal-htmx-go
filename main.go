@@ -31,9 +31,11 @@ var (
 )
 
 func init() {
+	slog.Info("Initializing application")
 
 	// Initialize the logger.
 	logLevelEnvironmentVariable := os.Getenv("LOG_LEVEL")
+	slog.Info("Environment Variables", "LOG_LEVEL", logLevelEnvironmentVariable)
 	logLevel := slog.LevelInfo
 
 	switch logLevelEnvironmentVariable {
@@ -57,8 +59,17 @@ func init() {
 	textHandler := slog.NewTextHandler(os.Stdout, opts)
 	logger = slog.New(textHandler)
 
+	logger.Debug(
+		"Environment variables",
+		"POSTGRES_URL", os.Getenv("POSTGRES_URL"),
+		"OIDC_PROVIDER_URL", os.Getenv("OIDC_PROVIDER_URL"),
+		"CLIENT_ID", os.Getenv("CLIENT_ID"),
+		"CLIENT_SECRET", os.Getenv("CLIENT_SECRET"),
+		"REDIRECT_URL", os.Getenv("REDIRECT_URL"),
+		"SESSION_KEY", os.Getenv("SESSION_KEY"),
+	)
+
 	dbURL := os.Getenv("POSTGRES_URL")
-	logger.Debug("POSTGRES_URL: %s", dbURL)
 	conn, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		panic(err)
@@ -86,7 +97,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := sessionStore.Get(r, "session")
 	profile := session.Values["profile"]
 	logger.Info("Handling index request")
-	t := template.Must(template.ParseFiles("index.html"))
+	t := template.Must(template.ParseFiles("index.html", "contact.html"))
 	t.Execute(w, profile)
 
 }

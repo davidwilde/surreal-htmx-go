@@ -19,11 +19,11 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 			levelBytes := []byte(headerLevel)
 			err := level.UnmarshalText(levelBytes)
 			if err != nil {
-				logger.Error("Error parsing log level: %s", err)
+				slog.Error("Error parsing log level", "Error", err)
 			} else {
-				logger.Info("Setting log level to %s", level)
+				slog.Info("Setting log level", "Level", level)
+				logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
 			}
-			logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 		}
 
 		next.ServeHTTP(w, r)
