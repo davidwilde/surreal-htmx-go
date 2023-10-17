@@ -97,9 +97,16 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := sessionStore.Get(r, "session")
 	profile := session.Values["profile"]
 	logger.Info("Handling index request")
+	logger.Debug("Profile", "profile", profile)
 	t := template.Must(template.ParseFiles("index.html", "contact.html"))
 	t.Execute(w, profile)
+}
 
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	session, _ := sessionStore.Get(r, "session")
+	session.Options.MaxAge = -1
+	session.Save(r, w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func main() {
@@ -111,6 +118,7 @@ func main() {
 	http.Handle("/contact", LoggingMiddleware((AuthMiddleware(http.HandlerFunc(Handler)))))
 	http.Handle("/login", LoggingMiddleware(http.HandlerFunc(LoginHandler)))
 	http.Handle("/callback", LoggingMiddleware(http.HandlerFunc(CallbackHandler)))
+	http.Handle("/logout", LoggingMiddleware(http.HandlerFunc(LogoutHandler)))
 
 	server := http.Server{
 		ErrorLog: webErrorLogger,
