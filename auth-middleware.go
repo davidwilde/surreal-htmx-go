@@ -46,7 +46,12 @@ func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// Retrieve the access token from the session
-		session, _ := sessionStore.Get(r, "session")
+		session, err := sessionStore.Get(r, "session")
+		if (err != nil) || (session == nil) {
+			logger.Warn("error getting session", "error", err)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
 		tokenString := session.Values["access_token"].(string)
 
 		if tokenString == "" {
@@ -54,7 +59,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		_, err := VerifyAccessTokenWithJWK(tokenString, "https://hobby.kinde.com/.well-known/jwks")
+		_, err = VerifyAccessTokenWithJWK(tokenString, "https://hobby.kinde.com/.well-known/jwks")
 		if err != nil {
 			logger.Warn("error verifying token", "error", err, "token", tokenString)
 			http.Error(w, "Invalid access token", http.StatusUnauthorized)
