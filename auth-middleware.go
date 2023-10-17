@@ -60,6 +60,11 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
+		if !ok {
+			logger.Warn("error getting access token", "error", ok)
+			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			return
+		}
 
 		if tokenString == "" {
 			http.Error(w, "Access token missing", http.StatusUnauthorized)

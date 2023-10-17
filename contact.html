@@ -13,6 +13,7 @@
       crossorigin="anonymous"
     />
   </head>
+  {{ define "contacts" }}
   <table class="table delete-row-example">
     <thead>
       <tr>
@@ -25,5 +26,6 @@
       {{ range . }} {{ template "person" .}} {{ end }}
     </tbody>
   </table>
+  {{ end }}
 </html>
 
