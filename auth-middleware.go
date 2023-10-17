@@ -44,6 +44,7 @@ func VerifyAccessTokenWithJWK(accessToken string, jwksURL string) (*jwt.Token, e
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.Debug("AuthMiddleware")
 
 		// Retrieve the access token from the session
 		session, err := sessionStore.Get(r, "session")
@@ -52,17 +53,24 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
-		tokenString := session.Values["access_token"].(string)
+		accessToken := session.Values["access_token"]
+		tokenString, ok := accessToken.(string)
+		if !ok {
+			logger.Warn("error getting access token", "error", ok)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
+			return
+		}
 
 		if tokenString == "" {
 			http.Error(w, "Access token missing", http.StatusUnauthorized)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 
 		_, err = VerifyAccessTokenWithJWK(tokenString, "https://hobby.kinde.com/.well-known/jwks")
 		if err != nil {
 			logger.Warn("error verifying token", "error", err, "token", tokenString)
-			http.Error(w, "Invalid access token", http.StatusUnauthorized)
+			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
 		}
 

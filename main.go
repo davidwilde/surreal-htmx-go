@@ -86,7 +86,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	session, _ := sessionStore.Get(r, "session")
 	profile := session.Values["profile"]
 	logger.Info("Handling index request")
-	t := template.Must(template.ParseFiles("index.html"))
+	t := template.Must(template.ParseFiles("index.html", "contact.html"))
 	t.Execute(w, profile)
 
 }
