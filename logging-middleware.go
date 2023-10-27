@@ -13,7 +13,8 @@ import (
 
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var level slog.Level
+        level := slog.LevelInfo
+
 		if r.Header.Get("x-log-level") != "" {
 			headerLevel := r.Header.Get("x-log-level")
 			levelBytes := []byte(headerLevel)
@@ -22,9 +23,19 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 				slog.Error("Error parsing log level", "Error", err)
 			} else {
 				slog.Info("Setting log level", "Level", level)
-				logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level}))
 			}
 		}
+		// if there is a user logged in, add it to the logger
+		session, _ := sessionStore.Get(r, "session")
+		if session.Values["user"] != nil {
+			logger = logger.With()
+		}
+		// add details about the request to the logger
+		logger = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level})).With(
+			"method", r.Method,
+			"url", r.URL,
+            "user agent", r.UserAgent(),
+		    "user", session.Values["user"])
 
 		next.ServeHTTP(w, r)
 	})

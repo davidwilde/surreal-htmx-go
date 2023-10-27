@@ -28,6 +28,7 @@ var (
 	sessionStore *sessions.CookieStore
 	provider     *oidc.Provider
 	logger       *slog.Logger
+    requestLogger *slog.Logger
 )
 
 func init() {

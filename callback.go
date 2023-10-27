@@ -50,6 +50,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	// Save the UserProfile in the session
 	session.Values["profile"] = profile
 	session.Values["access_token"] = token.AccessToken
+	session.Values["refresh_token"] = token.RefreshToken
 
 	if err := session.Save(r, w); err != nil {
 		logger.Debug("Failed to save session", "error", err)
