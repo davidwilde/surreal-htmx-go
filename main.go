@@ -22,13 +22,13 @@ type Person struct {
 }
 
 var (
-	db           *sql.DB
-	logLevel     string
-	oauthConfig  *oauth2.Config
-	sessionStore *sessions.CookieStore
-	provider     *oidc.Provider
-	logger       *slog.Logger
-    requestLogger *slog.Logger
+	db            *sql.DB
+	logLevel      string
+	oauthConfig   *oauth2.Config
+	sessionStore  *sessions.CookieStore
+	provider      *oidc.Provider
+	logger        *slog.Logger
+	requestLogger *slog.Logger
 )
 
 func init() {
@@ -86,7 +86,7 @@ func init() {
 		ClientID:     os.Getenv("CLIENT_ID"),
 		ClientSecret: os.Getenv("CLIENT_SECRET"),
 		Endpoint:     provider.Endpoint(),
-		RedirectURL:  os.Getenv("REDIRECT_URL"),
+		RedirectURL:  os.Getenv("RENDER_EXTERNAL_URL") + "/callback",
 		Scopes:       []string{"openid", "profile", "email"},
 	}
 
