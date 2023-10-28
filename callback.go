@@ -17,6 +17,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Info("Handling callback request")
 	code := r.URL.Query().Get("code")
 	token, err := oauthConfig.Exchange(r.Context(), code)
+	logger.Debug("Token-Exchange", "token", token)
 	if err != nil {
 		logger.Debug("Failed to exchange token", "error", err)
 		http.Error(w, "Failed to exchange token", http.StatusInternalServerError)
