@@ -1,21 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Email Login</title>
-  </head>
-  <body>
-    <h1>Login with Your Email Address</h1>
-    <p>Enter your email address to log in:</p>
-    {{ if .Name }}
-    <form method="post" action="/logout">
-      <button type="submit">Logout</a>
-    </form>
-    {{ else }}
-    <form method="post" action="/login">
-      <button type="submit">Login</button>
-    </form>
-    {{ end }}
-  </body>
-</html>
+{{ define "main"}}
+<h1>Hello</h1>
+{{ end }}

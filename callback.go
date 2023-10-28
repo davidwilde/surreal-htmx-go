@@ -35,7 +35,7 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to verify id token", http.StatusInternalServerError)
 		return
 	}
-	var profile UserProfile
+	var profile *UserProfile
 	if err := idToken.Claims(&profile); err != nil {
 		http.Error(w, "Failed to get claims", http.StatusInternalServerError)
 		return
@@ -60,5 +60,5 @@ func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Redirect to another page or render a template with the profile data
-	http.Redirect(w, r, "/profile", http.StatusTemporaryRedirect)
+	http.Redirect(w, r, "/contact", http.StatusTemporaryRedirect)
 }

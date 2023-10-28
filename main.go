@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"encoding/gob"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
@@ -66,7 +65,7 @@ func init() {
 		"OIDC_PROVIDER_URL", os.Getenv("OIDC_PROVIDER_URL"),
 		"CLIENT_ID", os.Getenv("CLIENT_ID"),
 		"CLIENT_SECRET", os.Getenv("CLIENT_SECRET"),
-		"REDIRECT_URL", os.Getenv("REDIRECT_URL"),
+		"CALLBACK_URL", getRedirectURL(),
 		"SESSION_KEY", os.Getenv("SESSION_KEY"),
 	)
 
@@ -86,28 +85,39 @@ func init() {
 		ClientID:     os.Getenv("CLIENT_ID"),
 		ClientSecret: os.Getenv("CLIENT_SECRET"),
 		Endpoint:     provider.Endpoint(),
-		RedirectURL:  os.Getenv("RENDER_EXTERNAL_URL") + "/callback",
-		Scopes:       []string{"openid", "profile", "email", "offline_access"},
+		RedirectURL:  getRedirectURL(),
+		Scopes:       []string{"openid", "profile", "email", "offline"},
 	}
 
 	sessionStore = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
 	gob.Register(UserProfile{})
 }
 
-func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := sessionStore.Get(r, "session")
-	profile := session.Values["profile"]
-	logger.Info("Handling index request")
-	logger.Debug("Profile", "profile", profile)
-	t := template.Must(template.ParseFiles("index.html", "contact.html"))
-	t.Execute(w, profile)
+func getRedirectURL() string {
+	url := os.Getenv("RENDER_EXTERNAL_URL")
+	if url == "" {
+		url = "http://localhost:3000"
+	}
+	return url + "/callback"
 }
 
-func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	session, _ := sessionStore.Get(r, "session")
-	session.Options.MaxAge = -1
-	session.Save(r, w)
-	http.Redirect(w, r, "/", http.StatusSeeOther)
+func getProfile(r *http.Request) UserProfile {
+	session, err := sessionStore.Get(r, "session")
+	if err != nil || len(session.Values) == 0 {
+		return UserProfile{}
+	}
+	profile, exists := session.Values["profile"]
+	if !exists {
+		return UserProfile{}
+	}
+
+	profileValue, ok := profile.(UserProfile)
+	if !ok {
+		logger.Debug("Profile did not parse into User Profile", "profile", profile)
+		return UserProfile{}
+	}
+	logger.Debug("Profile", "profile", profileValue)
+	return profileValue
 }
 
 func main() {
@@ -127,43 +137,4 @@ func main() {
 		Addr:     ":3000",
 	}
 	server.ListenAndServe()
-}
-
-func getPersonByID(id int) (Person, error) {
-	var person Person
-	logger.Debug("Getting person by ID", "id", id, "query", "SELECT id, name, email FROM people WHERE id = $1")
-	err := db.QueryRow("SELECT id, name, email FROM people WHERE id = $1", id).Scan(&person.Id, &person.Name, &person.Email)
-	if err != nil {
-		return person, err
-	}
-	return person, nil
-}
-
-func updatePerson(person Person, newName, newEmail string) error {
-	query := "UPDATE people SET name = $1, email = $2 WHERE id = $3"
-	logger.Debug("Updating person", "query", query, "$1", newName, "$2", newEmail, "$3", person.Id)
-	_, err := db.Exec(query, newName, newEmail, person.Id)
-	return err
-}
-
-func getAllPeople() ([]Person, error) {
-	query := "SELECT id, name, email FROM people"
-	logger.Debug("Getting all people", "query", query)
-	rows, err := db.Query(query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var people []Person
-	for rows.Next() {
-		var person Person
-		err := rows.Scan(&person.Id, &person.Name, &person.Email)
-		if err != nil {
-			return nil, err
-		}
-		people = append(people, person)
-	}
-
-	return people, nil
 }
