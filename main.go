@@ -87,7 +87,7 @@ func init() {
 		ClientSecret: os.Getenv("CLIENT_SECRET"),
 		Endpoint:     provider.Endpoint(),
 		RedirectURL:  os.Getenv("RENDER_EXTERNAL_URL") + "/callback",
-		Scopes:       []string{"openid", "profile", "email", "offline"},
+		Scopes:       []string{"openid", "profile", "email", "offline_access"},
 	}
 
 	sessionStore = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
@@ -115,11 +115,12 @@ func main() {
 	webErrorLogger := slog.NewLogLogger(handler, slog.LevelError)
 	logger.Info("Starting server on port 3000")
 
-	http.Handle("/", LoggingMiddleware(http.HandlerFunc(IndexHandler)))
+	http.Handle("/contact/", LoggingMiddleware((AuthMiddleware(http.HandlerFunc(Handler)))))
 	http.Handle("/contact", LoggingMiddleware((AuthMiddleware(http.HandlerFunc(Handler)))))
 	http.Handle("/login", LoggingMiddleware(http.HandlerFunc(LoginHandler)))
 	http.Handle("/callback", LoggingMiddleware(http.HandlerFunc(CallbackHandler)))
 	http.Handle("/logout", LoggingMiddleware(http.HandlerFunc(LogoutHandler)))
+	http.Handle("/", LoggingMiddleware(http.HandlerFunc(IndexHandler)))
 
 	server := http.Server{
 		ErrorLog: webErrorLogger,
