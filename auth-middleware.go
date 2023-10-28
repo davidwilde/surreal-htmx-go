@@ -24,6 +24,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
+		logger.Debug("session", "session", session)
 		accessToken := session.Values["access_token"]
 		refreshToken := session.Values["refresh_token"]
 		accessTokenString, ok := accessToken.(string)
