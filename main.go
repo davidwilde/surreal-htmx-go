@@ -87,7 +87,7 @@ func init() {
 		ClientSecret: os.Getenv("CLIENT_SECRET"),
 		Endpoint:     provider.Endpoint(),
 		RedirectURL:  os.Getenv("RENDER_EXTERNAL_URL") + "/callback",
-		Scopes:       []string{"openid", "profile", "email", "offline_access"},
+		Scopes:       []string{"openid", "profile", "email", "offline"},
 	}
 
 	sessionStore = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
