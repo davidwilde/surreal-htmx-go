@@ -56,12 +56,17 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		_, err = VerifyAccessTokenWithJWK(accessTokenString, "https://hobby.kinde.com/.well-known/jwks", refreshTokenString)
+		token, err := VerifyAccessTokenWithJWK(accessTokenString, "https://hobby.kinde.com/.well-known/jwks", refreshTokenString)
+
 		if err != nil {
 			logger.Warn("error verifying token", "error", err, "token", accessTokenString)
 			http.Redirect(w, r, "/login", http.StatusSeeOther)
 			return
 		}
+
+		sub := token.Claims.(jwt.MapClaims)["sub"].(string)
+		session.Values["user"] = sub
+		session.Save(r, w)
 
 		// Access token is valid; you can proceed to the protected endpoint.
 		// You can also add claims validation or other checks here if needed.
