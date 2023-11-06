@@ -93,6 +93,14 @@ func init() {
 	gob.Register(UserProfile{})
 }
 
+func getLogoutRedirectURL() string {
+    url := os.Getenv("RENDER_EXTERNAL_URL")
+    if url == "" {
+        url = "http://localhost:3000"
+    }
+    return url
+}
+
 func getRedirectURL() string {
 	url := os.Getenv("RENDER_EXTERNAL_URL")
 	if url == "" {
