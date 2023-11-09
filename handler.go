@@ -12,6 +12,7 @@ type details = struct {
 	People  []Person
 }
 
+// Handler handles the /contact/ request
 func Handler(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) >= 3 {

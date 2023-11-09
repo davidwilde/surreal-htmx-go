@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
-    "io/ioutil"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -13,6 +13,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+// AuthMiddleware is a middleware that checks if the request has a valid access token.
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger.Debug("AuthMiddleware")

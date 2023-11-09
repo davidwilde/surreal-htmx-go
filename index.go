@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// IndexHandler handles the / request
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	profile := getProfile(r)
 	details := struct {

@@ -94,11 +94,11 @@ func init() {
 }
 
 func getLogoutRedirectURL() string {
-    url := os.Getenv("RENDER_EXTERNAL_URL")
-    if url == "" {
-        url = "http://localhost:3000"
-    }
-    return url
+	url := os.Getenv("RENDER_EXTERNAL_URL")
+	if url == "" {
+		url = "http://localhost:3000"
+	}
+	return url
 }
 
 func getRedirectURL() string {

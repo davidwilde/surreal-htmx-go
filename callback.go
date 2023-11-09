@@ -6,13 +6,13 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 )
 
+// Define a struct to hold the session data
 type UserProfile struct {
-	// Define the fields you need in the session data
 	Name  string
 	Email string
-	// Add more fields as needed
 }
 
+// CallbackHandler handles the callback request from the OAuth2.0 provider
 func CallbackHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Info("Handling callback request")
 	code := r.URL.Query().Get("code")
